@@ -13,7 +13,7 @@ import java.util.zip.GZIPOutputStream;
 
 /**
  * @className: CatonFileUtils
- * @classDescription: 卡顿文件写入本地工具
+ * @classDescription: 卡顿堆栈写入本地文件工具
  * @author: leibing
  * @email: leibing@yy.com
  * @createTime:2018/8/2

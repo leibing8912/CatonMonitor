@@ -14,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @className: CatonStackCollect
- * @classDescription: 日志监视器，用于监测ui性能
+ * @classDescription: 卡顿收集，用于监测ui性能
  * @author: leibing
  * @email: leibing@yy.com
  * @createTime:2018/7/25
@@ -78,7 +78,7 @@ public class CatonStackCollect {
             mStackTraceList.clear();
         }
     };
-    // 日志采集Runnable
+    // 卡顿堆栈采集Runnable
     private Runnable mCollectCatonStackRunnable = new Runnable() {
         @Override
         public void run() {

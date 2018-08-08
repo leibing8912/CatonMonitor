@@ -151,11 +151,13 @@ public class UploadCatonStack {
     public synchronized void uploadCatonFile() {
         double catonFileSize = CatonFileUtils.getFileOrFilesSize(CatonFileUtils.CATON_FILE_PATH);
         CatonLogs.debug(TAG, "#uploadCatonFile catonFileSize = " + catonFileSize + " kb");
+        // 判断是否达到上传文件最大阀值
         boolean isOverMaxFileSize = catonFileSize > CatonStackCollect.CATON_FILE_MAX ? true : false;
         if (!CatonStackCollect.getInstance().isUpdateFiling()
                 && isOverMaxFileSize) {
             CatonStackCollect.getInstance().setIsUpdateFiling(true);
             try {
+                // 压缩卡顿堆栈文件，用于上传
                 CatonFileUtils.compressFile(
                         CatonFileUtils.CATON_FILE_PATH,
                         CatonFileUtils.CATON_COMPRESS_FILE_PATH);
@@ -163,6 +165,7 @@ public class UploadCatonStack {
                 CatonLogs.debug(TAG, "#writeDataToLocalFile compressFile e = " + e);
             }
             CatonLogs.debug(TAG, "#upload caton file......");
+            // 上传
             UploadCatonStack.getInstance().upLoadFile(UPLOAD_URL,
                     CatonFileUtils.CATON_COMPRESS_FILE_PATH, new Callback() {
                         @Override
@@ -174,10 +177,10 @@ public class UploadCatonStack {
                         @Override
                         public void onResponse(Call call, Response response) throws IOException {
                             CatonLogs.debug(TAG, "#upLoadFile onSuccess");
-                            CatonStackCollect.getInstance().setIsUpdateFiling(false);
                             // 删除卡顿堆栈文件
                             CatonFileUtils.deleteSingleFile(CatonFileUtils.CATON_FILE_PATH);
                             CatonFileUtils.deleteSingleFile(CatonFileUtils.CATON_COMPRESS_FILE_PATH);
+                            CatonStackCollect.getInstance().setIsUpdateFiling(false);
                         }
                     });
         }
