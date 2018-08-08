@@ -1,0 +1,97 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+def isReleaseBuild() {
+    return version.contains("SNAPSHOT") == false
+}
+
+def getReleaseRepositoryUrl() {
+    return hasProperty('RELEASE_REPOSITORY_URL') ? RELEASE_REPOSITORY_URL
+            : "maven库正式路径"
+}
+
+def getSnapshotRepositoryUrl() {
+    return hasProperty('SNAPSHOT_REPOSITORY_URL') ? SNAPSHOT_REPOSITORY_URL
+            : "maven库测试路径"
+}
+
+def getRepositoryUsername() {
+    return hasProperty('NEXUS_USERNAME') ? NEXUS_USERNAME : ""
+}
+
+def getRepositoryPassword() {
+    return hasProperty('NEXUS_PASSWORD') ? NEXUS_PASSWORD : ""
+}
+
+group = GROUP
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    exclude '**/*.so'
+}
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+task androidSourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.sourceFiles
+}
+task androidNativeJar(type: Jar) {
+    classifier = 'so'
+    from(new File(buildDir, 'libs'))
+    include("**/*.so")
+}
+task androidNativeZip(type: Zip) {
+    classifier = 'so'
+    from(new File(buildDir, 'libs'))
+    include("**/*.so")
+}
+
+task clearJar(type: Delete) {
+    delete 'build/libs/' + POM_ARTIFACT_ID + '-' + version + '.jar'
+}
+
+task makeJar(type: Jar) {
+    from('build/intermediates/classes/release/')
+    baseName "${POM_ARTIFACT_ID}"
+    // 去掉不需要打包的目录和文件
+    exclude('**/BuildConfig.class')
+    exclude('**/R.class')
+}
+
+makeJar.dependsOn(clearJar, build)
+
+task androidClassesJar(type: Jar) {
+    classifier = 'jar'
+    from(new File(buildDir, 'intermediates/classes/release'))
+    include("**/*.so")
+}
+
+
+android.libraryVariants
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifact bundleRelease
+            artifact androidJavadocsJar
+            artifact androidSourcesJar
+            artifact makeJar
+        }
+    }
+}
+publishing {
+    repositories {
+        maven {
+            credentials {
+                username = getRepositoryUsername()
+                password = getRepositoryPassword()
+            }
+            if (isReleaseBuild()) {
+                url getReleaseRepositoryUrl()
+            } else {
+                url getSnapshotRepositoryUrl()
+            }
+        }
+    }
+}

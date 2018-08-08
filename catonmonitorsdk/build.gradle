@@ -1,0 +1,54 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 22
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 22
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.squareup.okhttp3:okhttp:3.11.0'
+}
+
+//apply from: 'http://code.yy.com/ci_team/build-snippet/raw/master/gradlebuild/publish.gradle'
+apply from: 'publish.gradle'
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+
+            //The publication doesn't know about our dependencies, so we have to manually add them to the pom
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.compile.allDependencies.each {
+                    if (it.group != null && it.name != null) {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                        if (it.artifacts.size() > 0) {
+                            it.artifacts.each { rule ->
+                                if (rule.classifier != null) {
+                                    println "rule.classifier = " + rule.classifier
+                                    dependencyNode.appendNode('classifier', rule.classifier)
+                                }
+
+                                if (rule.type != null) {
+                                    println "rule.type = " + rule.type
+                                    dependencyNode.appendNode('type', rule.type)
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+}
